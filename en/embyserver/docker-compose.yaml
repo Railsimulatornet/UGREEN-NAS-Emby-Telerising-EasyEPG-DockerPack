@@ -1,0 +1,179 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# Shared ENV for all containers (interpolated from .env)
+# Copyright Roman Glos 28.01.2026
+x-common-env: &common-env
+  TZ: "${TZ:-Europe/Berlin}"
+
+networks:
+  emby_net:
+    driver: bridge
+
+services:
+  # ---------------------------------------------------------
+  # Emby Media Server
+  # ---------------------------------------------------------
+  emby:
+    image: emby/embyserver:latest
+    container_name: emby_embyserver
+    restart: always
+    networks: [emby_net]
+
+    # Intel iGPU / QSV (hardware transcoding)
+    devices:
+      - /dev/dri:/dev/dri
+
+    environment:
+      <<: *common-env
+      UID: "${EMBY_UID:-1000}"
+      GID: "${EMBY_GID:-10}"
+      # Additional group IDs (e.g. render/video/etc.)
+      GIDLIST: "${EMBY_GIDLIST:-44,105}"
+      UMASK: "${EMBY_UMASK:-002}"
+
+    volumes:
+      # Config / state
+      - ${DOCKER_DIR:-/volume2/docker/embyserver}/emby/config:/config
+      # Media library
+      - ${MEDIA_DIR:-/volume1/Emby}:/mnt/Emby
+      # Optional: separate backup location (e.g. Backup & Restore plugin)
+      - ${EMBY_BACKUP_DIR:-/volume3/dockersich/EmbySicherung}:/mnt/EmbyBackup
+      # "System" share (plugins/exports/etc., depending on your setup)
+      - ${EMBY_SYSTEM_DIR:-/volume2/EmbySystem}:/mnt/Embysystem
+      # Mirror EasyEPG XML directly into the Emby system path
+      - ${DOCKER_DIR:-/volume2/docker/embyserver}/takealug_new-easyepg/easyepg_xml:/mnt/Embysystem/EasyEPG
+
+    ports:
+      # Emby Web (HTTP): UI/API
+      - "${EMBY_PORT_HTTP:-8096}:8096"
+
+      # Emby auto-discovery on the LAN (optional)
+      # If you ALWAYS connect Emby clients manually via IP/DNS, you can omit this.
+      - "${EMBY_PORT_DISCOVERY_UDP:-7359}:7359/udp"
+
+      # Emby HTTPS (if Emby terminates TLS itself) -> DISABLED here because SWAG handles TLS
+      # - "${EMBY_PORT_HTTPS:-8920}:8920"
+
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # ---------------------------------------------------------
+  # SWAG (reverse proxy + Certbot + Fail2Ban)
+  # ---------------------------------------------------------
+  swag:
+    image: linuxserver/swag:latest
+    container_name: emby_swag
+    restart: always
+    networks: [emby_net]
+
+    environment:
+      <<: *common-env
+      PUID: "${PUID:-1000}"
+      PGID: "${PGID:-10}"
+      URL: "${SWAG_URL:-example.com}"
+      SUBDOMAINS: "${SWAG_SUBDOMAINS:-emby}"
+      ONLY_SUBDOMAINS: "${SWAG_ONLY_SUBDOMAINS:-true}"
+      EMAIL: "${SWAG_EMAIL:-mail@example.com}"
+      FAIL2BAN_ENABLED: "${SWAG_FAIL2BAN_ENABLED:-true}"
+
+    volumes:
+      - ${DOCKER_DIR:-/volume2/docker/embyserver}/linuxserver_swag/config:/config
+
+    ports:
+      # HTTP (external port freely selectable) -> container 80
+      - "${SWAG_PORT_HTTP:-5080}:80"
+      # HTTPS (external port freely selectable) -> container 443
+      - "${SWAG_PORT_HTTPS:-50443}:443"
+      # Custom: Emby SSL port (8920) on the NAS -> SWAG (nginx listener)
+      - "${SWAG_PORT_EMBY_SSL:-8920}:8920"
+      # SWAG dashboard (optional)
+      - "${SWAG_PORT_DASH:-58080}:8080"
+
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+    security_opt:
+      - no-new-privileges:true
+
+    depends_on:
+      - emby
+
+    logging: *default-logging
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # ---------------------------------------------------------
+  # EasyEPG (EPG generator / XML output)
+  # ---------------------------------------------------------
+  easyepg:
+    image: railsimulatornet/new-easyepg:bs4fix
+    container_name: emby_takealug_new-easyepg
+    restart: always
+    networks: [emby_net]
+
+    environment:
+      <<: *common-env
+      USER_ID: "${USER_ID:-1000}"
+      GROUP_ID: "${GROUP_ID:-10}"
+      TIMEZONE: "${TZ:-Europe/Berlin}"
+      UPDATE: "${EASYEPG_UPDATE:-yes}"
+      REPO: "${EASYEPG_REPO:-script.service.easyepg-lite}"
+      BRANCH: "${EASYEPG_BRANCH:-main}"
+      PYTHONPATH: "${EASYEPG_PYTHONPATH:-/easyepg/pylibs}"
+
+    volumes:
+      - ${DOCKER_DIR:-/volume2/docker/embyserver}/takealug_new-easyepg/easyepg:/easyepg
+      - ${DOCKER_DIR:-/volume2/docker/embyserver}/takealug_new-easyepg/easyepg_xml:/easyepg/xml
+
+    ports:
+      - "${EASYEPG_PORT:-4000}:4000"
+
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  # ---------------------------------------------------------
+  # Telerising (TV Streams API)
+  # ---------------------------------------------------------
+  telerising-api:
+    image: starfoxfs/telerising:latest
+    container_name: telerising-api
+    hostname: telerising
+    restart: unless-stopped
+
+    environment:
+      <<: *common-env
+      UID: "${TELERISING_UID:-1000}"
+      GID: "${TELERISING_GID:-10}"
+      UPDATE: "${TELERISING_UPDATE:-yes}"
+
+    ports:
+      - "${TELERISING_PORT:-5000}:5000"
+
+    volumes:
+      - ${DOCKER_DIR:-/volume2/docker/embyserver}/telerising:/telerising
+
+    tmpfs:
+      - /tmp
+      - /var/log
+
+    labels:
+      - autoheal=true
+      - com.centurylinklabs.watchtower.enable=true
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/api/zde/live/rtl2_deutschland.m3u8 | head -n 1 | grep -q '^#EXTM3U'"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s

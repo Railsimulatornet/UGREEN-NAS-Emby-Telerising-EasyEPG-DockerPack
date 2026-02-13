@@ -1,0 +1,9 @@
+# Release-Assets nicht committen
+release-assets/*.zip
+
+# Keine Word-Dateien im Repo
+*.docx
+
+# typische lokale Dateien
+.DS_Store
+Thumbs.db
