@@ -1,5 +1,5 @@
 # Emby Telerising EasyEPG DockerPack für UGREEN NAS
-![EmbyDockerPack](Screens/EmbyDockerPack.png)
+![EmbyDocker](Screens/EmbyDockerPack.png)
 
 [English](README_EN.md)
 
