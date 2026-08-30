@@ -114,7 +114,7 @@ services:
   # EasyEPG (EPG generator / XML output)
   # ---------------------------------------------------------
   easyepg:
-    image: railsimulatornet/new-easyepg:bs4fix
+    image: railsimulatornet/new-easyepg:latest
     container_name: emby_takealug_new-easyepg
     restart: always
     networks: [emby_net]
