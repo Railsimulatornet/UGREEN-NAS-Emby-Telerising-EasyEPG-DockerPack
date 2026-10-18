@@ -1,5 +1,7 @@
 # Emby Telerising EasyEPG DockerPack for UGREEN NAS
 
+[![Compose](https://github.com/Railsimulatornet/UGREEN-NAS-Emby-Telerising-EasyEPG-DockerPack/actions/workflows/compose-validation.yml/badge.svg?branch=main)](https://github.com/Railsimulatornet/UGREEN-NAS-Emby-Telerising-EasyEPG-DockerPack/actions/workflows/compose-validation.yml)
+
 [Deutsch](README.md)
 
 This repository provides a ready-to-use Docker project for **UGREEN NAS (UGOS Pro)**:
@@ -9,19 +11,19 @@ This repository provides a ready-to-use Docker project for **UGREEN NAS (UGOS Pr
 
 - **de/**: German project + German PDF manual
 - **en/**: English project + English PDF manual
-- **release-assets/**: ZIP files for GitHub Releases (DE and EN)
+- [Releases](https://github.com/Railsimulatornet/UGREEN-NAS-Emby-Telerising-EasyEPG-DockerPack/releases/latest): ready-to-use ZIP files (DE and EN)
 
 ## Quick start (UGREEN Docker app)
 
-1. Download the ZIP from **Releases**:
-   - DE: `Emby_Telerising_EasyEPG_DockerPack_v1_de.zip`
-   - EN: `Emby_Telerising_EasyEPG_DockerPack_v1_en.zip`
+1. Download the ZIP from the [latest release](https://github.com/Railsimulatornet/UGREEN-NAS-Emby-Telerising-EasyEPG-DockerPack/releases/latest):
+   - **DE**: file ending in `_de.zip`
+   - **EN**: file ending in `_en.zip`
 
 2. Extract into your Docker directory on the NAS.
 
-3. Edit `.env` in the project folder (paths, SWAG domain, UID/GID, ports).
+3. Edit `embyserver/.env` in the extracted package (paths, SWAG domain, UID/GID, ports).
 
-4. Import the project in the UGREEN Docker app and start it.
+4. Import the `embyserver` folder in the UGREEN Docker app and start the project.
 
 ## Documentation
 
