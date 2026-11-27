@@ -106,7 +106,7 @@ jobs:
 
       - name: Publish emby scan results
         if: ${{ always() && steps.reports.outputs.emby == 'true' }}
-        uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
+        uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
           sarif_file: ${{ runner.temp }}/image-security/emby.sarif
           category: container-images/emby/${{ matrix.arch }}
@@ -115,7 +115,7 @@ jobs:
 
       - name: Publish swag scan results
         if: ${{ always() && steps.reports.outputs.swag == 'true' }}
-        uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
+        uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
           sarif_file: ${{ runner.temp }}/image-security/swag.sarif
           category: container-images/swag/${{ matrix.arch }}
@@ -124,7 +124,7 @@ jobs:
 
       - name: Publish easyepg scan results
         if: ${{ always() && steps.reports.outputs.easyepg == 'true' }}
-        uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
+        uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
           sarif_file: ${{ runner.temp }}/image-security/easyepg.sarif
           category: container-images/easyepg/${{ matrix.arch }}
@@ -133,7 +133,7 @@ jobs:
 
       - name: Publish telerising scan results
         if: ${{ always() && steps.reports.outputs.telerising == 'true' }}
-        uses: github/codeql-action/upload-sarif@1bd86f2fdb4b86187fa4059f16f31a3202acc9ea # v4.39.4
+        uses: github/codeql-action/upload-sarif@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
           sarif_file: ${{ runner.temp }}/image-security/telerising.sarif
           category: container-images/telerising/${{ matrix.arch }}
